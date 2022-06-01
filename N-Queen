@@ -1,0 +1,52 @@
+############################################################
+# Section 1: N-Queens
+############################################################
+import math
+
+
+def num_placements_all(n):
+    return math.factorial(n * n) / (math.factorial(n * (n - 1)) * math.factorial(n))
+
+
+def num_placements_one_per_row(n):
+    return n * n
+
+
+def n_queens_valid(board):
+    isTrue = None
+    for idx in range(len(board)):
+        isTrue = nth_queen_valid(board, idx)
+    return isTrue
+
+
+def nth_queen_valid(board, n):
+    for i in range(n):
+        if abs(board[i] - board[n]) == n - i or board[i] == board[n]:
+            return False
+    return True
+
+
+def n_queens_solutions(n):
+    result = []
+    path = []
+    return dfs([-1] * n, 0, path, result)
+
+
+def dfs(board, index, path, result):
+    if index == len(board):
+        result.append(path)
+        return
+    for i in range(len(board)):
+        # print("Path before trying is ", path)
+        board[index] = i
+        # print("Trying number ", i)
+        if nth_queen_valid(board, index):
+            # print("Valid new path is ", path)
+            newPath = [item for item in path]
+            newPath.append(i)
+            # print("Path carried forward is ", newPath)
+            dfs(board, index + 1, newPath, result)
+        else:
+            # print("Invalid")
+            board[index] = -1
+    return result
