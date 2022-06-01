@@ -1,0 +1,149 @@
+############################################################
+# Section 3: Linear Disk Movement
+############################################################
+class disks():
+    def __init__(self, length, n, grid):
+        self.length = length
+        self.n = n
+        self.moves = []
+        if len(grid) == 0:
+            self.grid = [x for x in range(n)] + [-1] * (length - n)
+        elif len(grid) == length:
+            self.grid = grid
+        else:
+            print("Given grid not valid")
+
+    def get_grid(self):
+        return self.grid
+
+    def move(self, i, distance):
+        if (i + distance) < 0 or (i + distance) >= self.length:
+            print("Invalid move")
+            return
+        self.grid[i + distance] = self.grid[i]
+        self.grid[i] = -1
+
+    def is_identical_solved(self):
+        for i in range(self.length - self.n):
+            if self.grid[i] != -1:
+                return False
+        for i in range(self.length - self.n, self.length):
+            if self.grid[i] == -1:
+                return False
+        return True
+
+    def is_distinct_solved(self):
+        for i in range(self.length - self.n):
+            if self.grid[i] != -1:
+                return False
+        for i in range(self.length - self.n, self.length):
+            if self.grid[i] != self.length -i -1:
+                return False
+        return True
+
+    def copy(self):
+        newGrid = []
+        newMoves = []
+        for i in range(self.length):
+            newGrid.append(self.grid[i])
+        copyDisks = disks(self.length, self.n, newGrid)
+        for move in self.moves:
+            newMoves.append(move)
+        copyDisks.moves = newMoves
+        return copyDisks
+
+    def add_move(self, move):
+        self.moves.append(move)
+
+    def successor(self):
+        for i in range(self.length):
+            # case of moving one distance forward
+            if self.grid[i] != -1 and i + 1 < self.length and self.grid[i + 1] == -1:
+                copyDisk1 = self.copy()
+                copyDisk1.move(i, 1)
+                yield (i, i + 1), copyDisk1
+            # case of moving two distance forward
+            if self.grid[i] != -1 and i + 2 < self.length and self.grid[i + 2] == -1 and self.grid[i+1] != -1:
+                copyDisk2 = self.copy()
+                copyDisk2.move(i, 2)
+                yield (i, i + 2), copyDisk2
+            # case of moving one distance backward
+            if self.grid[i] != -1 and i - 1 >= 0 and self.grid[i - 1] == -1:
+                copyDisk3 = self.copy()
+                copyDisk3.move(i, -1)
+                yield (i, i - 1), copyDisk3
+            # case of moving two distance backward
+            if self.grid[i] != -1 and i - 2 >= 0 and self.grid[i - 2] == -1 and self.grid[i-1] != -1:
+                copyDisk4 = self.copy()
+                copyDisk4.move(i, -2)
+                yield (i, i - 2), copyDisk4
+
+
+def solve_identical_disks(length, n):
+    disk = disks(length, n, [])
+    result = []
+    visitedGrid = []
+    if disk.is_identical_solved():
+        return result
+    frontier = [disk]
+    while len(frontier) != 0:
+        currentDisk = frontier.pop(0)
+        g = currentDisk.successor()
+        while True:
+            try:
+                move, newDisk = g.__next__()
+                newDisk.add_move(move)
+                if newDisk.get_grid() not in visitedGrid:
+                    frontier.append(newDisk)
+                    visitedGrid.append(newDisk.get_grid())
+                if newDisk.is_identical_solved():
+                    result.append(newDisk.moves)
+            except StopIteration:
+                break
+    if len(result) != 0:
+        optimalSolution = result[0]
+        maxMove = len(optimalSolution)
+        for solution in result:
+            length = len(solution)
+            if length < maxMove:
+                maxMove = len(solution)
+                optimalSolution = solution
+        return optimalSolution
+    else:
+        return None
+
+def solve_distinct_disks(length, n):
+    disk = disks(length, n, [])
+    result = []
+    visitedGrid = []
+    if disk.is_distinct_solved():
+        return result
+    visitedGrid.append(disk.get_grid())
+    frontier = [disk]
+    while len(frontier) != 0:
+        currentDisk = frontier.pop(0)
+        g = currentDisk.successor()
+        while True:
+            try:
+                move, newDisk = g.__next__()
+                newDisk.add_move(move)
+                if newDisk.get_grid() not in visitedGrid:
+                    frontier.append(newDisk)
+                    visitedGrid.append(newDisk.get_grid())
+                else:
+                    continue
+                if newDisk.is_distinct_solved():
+                    result.append(newDisk.moves)
+            except StopIteration:
+                break
+    if len(result) != 0:
+        optimalSolution = result[0]
+        maxMove = len(optimalSolution)
+        for solution in result:
+            length = len(solution)
+            if length < maxMove:
+                maxMove = len(solution)
+                optimalSolution = solution
+        return optimalSolution
+    else:
+        return None
