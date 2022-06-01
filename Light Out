@@ -1,0 +1,136 @@
+############################################################
+# Section 2: Lights Out
+############################################################
+import random
+
+
+class LightsOutPuzzle(object):
+
+    def __init__(self, board):
+        self.board = board
+        self.wideIdx = len(board[0]) - 1
+        self.heightIdx = len(board) - 1
+        self.path = []
+
+    def __eq__(self, other):
+        return self.get_board() == other.get_board()
+        # if self.wideIdx == other.wideIdx && self.heightIdx==other.heightIdx:
+        #    for idx in range(self.heightIdx+1):
+        #        for jdx in range(self.wideIdx+1):
+        #            if self.board[idx][jdx] != other.get_board()[idx][jdx]:
+        #                return False
+        #    return True
+        # return False
+
+    def add_path(self, row, col):
+        self.path.append((row, col))
+
+    def get_board(self):
+        return self.board
+
+    def perform_move(self, row, col):
+
+        self.board[row][col] = not (self.board[row][col])
+        if col < self.wideIdx:
+            self.board[row][col + 1] = not self.board[row][col + 1]
+        if col > 0:
+            self.board[row][col - 1] = not self.board[row][col - 1]
+        if row < self.heightIdx:
+            self.board[row + 1][col] = not self.board[row + 1][col]
+        if row > 0:
+            self.board[row - 1][col] = not self.board[row - 1][col]
+        # self.add_path(row, col)
+
+    def scramble(self):
+        for idx in range(self.heightIdx + 1):
+            for jdx in range(self.wideIdx + 1):
+                myBoolean = random.random() < 0.5
+                if myBoolean:
+                    self.perform_move(idx, jdx)
+
+    def is_solved(self):
+        for idx in range(self.heightIdx + 1):
+            for jdx in range(self.wideIdx + 1):
+                if self.board[idx][jdx]:
+                    return False
+        return True
+
+    def copy(self):
+        newBoard = [[] for i in range(self.heightIdx + 1)]
+        for idx in range(self.heightIdx + 1):
+            rowList = []
+            for jdx in range(self.wideIdx + 1):
+                rowList.append(self.board[idx][jdx])
+            newBoard[idx] = rowList
+        newPath = []
+        for i in range(len(self.path)):
+            newPathTuple = (self.path[i][0], self.path[i][1])
+            newPath.append(newPathTuple)
+        newPuzzle = LightsOutPuzzle(newBoard)
+        newPuzzle.path = newPath
+        return newPuzzle
+
+    def successors(self):
+        for idx in range(self.heightIdx + 1):
+            for jdx in range(self.wideIdx + 1):
+                copyPuzzle = self.copy()
+                copyPuzzle.perform_move(idx, jdx)
+                move = (idx, jdx)
+                yield move, copyPuzzle
+
+    def find_solution(self):
+        result = []
+        self.bfs(result)
+        if len(result) != 0:
+            optimalSolution = result[0]
+            maxMove = len(optimalSolution)
+            for solution in result:
+                length = len(solution)
+                if length < maxMove:
+                    maxMove = len(solution)
+                    optimalSolution = solution
+            return optimalSolution
+        else:
+            return None
+
+    def bfs(self, result):
+        frontier = [self]
+        visited = []
+        if self.is_solved():
+            return
+        visited.append(self)
+        while len(frontier) != 0:
+            currentPuzzle = frontier.pop(0)
+            g = currentPuzzle.successors()
+            while True:
+                try:
+                    (move, copyPuzzle) = g.__next__()
+                    copyPuzzle.add_path(move[0], move[1])
+                    if copyPuzzle not in visited:
+                        frontier.append(copyPuzzle)
+                        visited.append(copyPuzzle)
+                    else:
+                        continue
+                    if copyPuzzle.is_solved():
+                        result.append(copyPuzzle.path)
+                except StopIteration:
+                    # print("Yield Iteration Done")
+                    break
+                # for idx in range(currentPuzzle.heightIdx + 1):
+                #    for jdx in range(currentPuzzle.wideIdx + 1):
+                #        copyBoard = currentPuzzle.copy()
+                #        copyBoard.perform_move(idx, jdx)
+
+
+def create_puzzle(rows, cols):
+    row = [False] * cols
+    # print(row)
+    board = []
+    for i in range(rows):
+        newRow = []
+        for j in range(cols):
+            newRow.append(False)
+        board.append(newRow)
+    # print(board)
+    puzzle = LightsOutPuzzle(board)
+    return puzzle
